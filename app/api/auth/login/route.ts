@@ -8,6 +8,7 @@ const prisma = new PrismaClient();
 export async function POST(request: Request) {
   try {
     const { email, password } = await request.json();
+    console.log('Login secret:', process.env.JWT_SECRET);
 
     const user = await prisma.user.findUnique({
       where: { email },
@@ -31,7 +32,7 @@ export async function POST(request: Request) {
 
     const token = sign(
       { userId: user.id },
-      process.env.JWT_SECRET || 'your-secret-key',
+      process.env.JWT_SECRET!,
       { expiresIn: '1d' }
     );
 
@@ -43,8 +44,9 @@ export async function POST(request: Request) {
     response.cookies.set('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: 'lax',
       maxAge: 60 * 60 * 24, // 1 day
+      path: '/',
     });
 
     return response;

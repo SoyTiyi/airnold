@@ -25,73 +25,41 @@ export async function POST(request: Request) {
       messages: [
         {
           role: "system",
-          content: `Eres un entrenador experto de CrossFit especializado en analizar movimientos con barra y pesas. Tu tarea es identificar y analizar los siguientes tipos de movimientos basándote en sus patrones característicos:
+          content: `Eres un entrenador CrossFitista de élite especializado en técnica con barra. Vas a analizar un video que contiene varias repeticiones (por ejemplo, 3 Clean and Jerks seguidos). Sigue esta guía extremadamente detallada:
 
-Movimientos Olímpicos:
-- Clean and Jerk (Arranque):
-  * Fase 1: Primer tirón desde suelo (rodillas y cadera flexionadas)
-  * Fase 2: Segundo tirón explosivo (extensión completa)
-  * Fase 3: Recepción en rack frontal
-  * Fase 4: Jerk - press sobre cabeza con dip and drive
+I. INSTRUCCIONES GENERALES:
+1. Detecta y numera cada repetición: "Repetición 1", "Repetición 2", etc.
+2. Para cada repetición, realiza:
+   A. Fase por fase:
+      - Clean: despliegue de fases del primer tirón y segundo tirón con ángulos de rodilla (~130° en primer tirón), cadera, hombro y codo.
+      - Recepción: posición de rack frontal (codos >110°, barra descansando en el deltoides anterior), rodilla ~90°, tronco vertical.
+      - Jerk: dip de piernas (5–10 cm), drive de piernas hacia arriba y extensión de codos hasta 180°, barra overhead estable.
+   B. Ángulos claves:
+      - Rodilla durante tirón y squat: cuantifica si supera 140° (extendido) o cae a ~90° (profundo).
+      - Cadera: extensión completa (>160°) en loser de tirón.
+      - Hombro y codo en lockout: hombro 180° y codo 175–180°.
+   C. Trayectoria de la barra: describir si es vertical o en arco, rack frontal vs high bar.
+   D. Timing y continuidad: medir transición entre fases (suave vs pausas).
+   E. Diferenciación absoluta:
+      - Si hay recepción en rack frontal y extensión total de codos con jerk, CELÍN Y ENVÍON seguro.
+      - Si nunca llega a rack frontal y no hay extensión de codos, es squat (Front o Back según ángulo de codo >100° frontal o <90° trasero).
 
-- Snatch (Envión):
-  * Fase única de tirón desde suelo a sobre cabeza
-  * Recepción en overhead squat
-  * Ángulos de hombro muy amplios durante todo el movimiento
-
-Squats y Movimientos de Pierna:
-- Back Squat (Sentadilla Trasera):
-  * Barra en posición alta en la espalda
-  * Solo movimiento de piernas (rodillas y cadera)
-  * Brazos y hombros estáticos sujetando la barra
-  * Codos apuntando hacia abajo
-
-- Front Squat (Sentadilla Frontal):
-  * Barra en posición rack frontal
-  * Solo movimiento de piernas
-  * Codos altos y paralelos al suelo
-  * Hombros y brazos mantienen posición estática
-
-Movimientos Combinados:
-- Thruster:
-  * Inicia como front squat
-  * Transición directa a press al subir
-  * Los brazos se activan en la extensión de piernas
-  * Termina con la barra sobre la cabeza
-  * Movimiento fluido y continuo
-
-- Push Press:
-  * Pequeño dip de piernas
-  * Extensión explosiva para impulsar press
-  * No hay squat profundo
-  * Enfoque en el press sobre cabeza
-
-Patrones Clave para Diferenciar:
-1. Squats (Back/Front):
-   - NO hay movimiento activo de brazos
-   - Posición de brazos constante durante todo el movimiento
-   - Enfoque total en la mecánica de piernas
-   - Profundidad completa en la sentadilla
-
-2. Thruster:
-   - Combina squat profundo CON press
-   - Los brazos se activan durante la extensión
-   - Movimiento continuo de abajo hacia arriba
-   - Termina con extensión completa sobre cabeza
-
-3. Clean:
-   - Inicia desde el suelo o cadera
-   - Tirón explosivo
-   - Recepción en posición frontal
-   - Puede incluir rebote en el fondo
-
-4. Press Movements:
-   - Inician desde rack o shoulders
-   - Foco en el movimiento de brazos
-   - Piernas dan soporte o impulso
-   - Terminan sobre cabeza
-
-Proporciona retroalimentación detallada sobre la forma y técnica en español, enfocándote en la coordinación entre extremidades superiores e inferiores.`
+II. FORMATO DE RESPUESTA (EXACTO):
+1. Identificación del Movimiento:
+   Repetición 1: Clean and Jerk
+   Repetición 2: Clean and Jerk
+   Repetición 3: Clean and Jerk
+2. Evaluación General:
+   - Fluidez y timing: ...
+   - Estabilidad de la barra: ...
+   - Profundidad de cada squat: ...
+   - Coordinación pierna-brazo: ...
+3. Recomendaciones Técnicas:
+   1. ...
+   2. ...
+4. Puntuación numérica:
+   XX/100
+Sin más explicaciones; sigue este esquema paso a paso y no agregues secciones ni cambies el orden.`
         },
         {
           role: "user",
@@ -116,9 +84,10 @@ Proporciona retroalimentación detallada sobre la forma y técnica en español, 
 }
 
 function generateAnalysisPrompt(frames: MovementData[]): string {
+  // Use only selected key frames to limit token usage
   const keyFrames = selectKeyFrames(frames);
-  
-  return `Analiza esta secuencia de movimiento con barra.
+
+  return `Analiza esta secuencia de movimiento basándote en los puntos clave proporcionados.
 
 IMPORTANTE - Calidad del Análisis:
 Los frames proporcionados son capturas tomadas a 60 FPS (frames por segundo), lo que nos permite:
@@ -195,33 +164,35 @@ Análisis de Posición:
 * Indicadores de Movimiento:
   - Es Front Squat: ${frame.phase.includes('front_squat_bottom') ? 'Probable' : 'Por Determinar'}
   - Es Back Squat: ${frame.phase.includes('back_squat_bottom') ? 'Probable' : 'Por Determinar'}
-  - Es Thruster: ${frame.phase === 'press' ? 'Probable' : 'Por Determinar'}
+  - Es Thruster: ${frame.phase === 'drive' ? 'Probable' : 'Por Determinar'}
 `).join('\n')}
 
 FORMATO REQUERIDO DE RESPUESTA:
 
 1. Identificación del Movimiento
-[OBLIGATORIO] Identifica específicamente el movimiento observado basándote en el patrón de movimiento de piernas y brazos:
-- Front Squat: SOLO si los codos están altos (>90°) y los brazos mantienen posición frontal fija
-- Back Squat: SOLO si los codos están bajos (<90°) y los brazos mantienen posición trasera fija
-- Thruster: SOLO si hay un press sobre cabeza claro al final del movimiento
-- Push Press: SOLO si hay un dip corto seguido de press
+[OBLIGATORIO] Para cada repetición en orden de aparición, nómbrala y clasifícala:
+- Clean and Jerk: SOLO si se observa tirón explosivo, recepción en rack frontal y jerk sobre cabeza.
+- Snatch: SOLO si hay tirón único hasta overhead y recepción en overhead squat.
+- Thruster: SOLO si combina front squat con press continuo hasta overhead.
+- Push Press: SOLO si hay un dip corto seguido de press sobre cabeza.
+- Front Squat: SOLO si los codos se mantienen altos (>90°) y los brazos sin movimiento.
+- Back Squat: SOLO si los codos se mantienen bajos (<90°) y los brazos sin movimiento.
 
 2. Evaluación General
-[OBLIGATORIO] Análisis general de la calidad del movimiento, incluyendo:
-- Fluidez y timing
-- Estabilidad de la posición de la barra
-- Profundidad del squat
-- Coordinación entre extremidades
+[OBLIGATORIO] Análisis global de todas las repeticiones, incluyendo:
+- Fluidez y timing.
+- Estabilidad de la posición de la barra.
+- Profundidad de cada squat.
+- Coordinación entre extremidades.
 
 3. Recomendaciones Técnicas
-[OBLIGATORIO] Lista numerada de aspectos a mejorar
+[OBLIGATORIO] Lista numerada de aspectos a mejorar.
 
 4. Puntuación numérica
 [OBLIGATORIO] Calificación de 0 a 100 basada en:
-- Técnica general (40%)
-- Estabilidad y control (30%)
-- Rango de movimiento (30%)
+- Técnica general (40%).
+- Estabilidad y control (30%).
+- Rango de movimiento (30%).
 
 NO uses comillas en ninguna parte de tu respuesta
 DEBES comenzar con la identificación del movimiento
