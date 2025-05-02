@@ -1,0 +1,1 @@
+export type Phase = 'descent' | 'drive' | 'reception' | 'press' | 'squat_bottom'; 
