@@ -27,6 +27,7 @@ model Session {
   videoUrl  String
   exercise  String
   analysis  Json
+  recommendations String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 } 

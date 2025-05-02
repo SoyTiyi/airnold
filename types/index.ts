@@ -12,7 +12,7 @@ export interface Angles {
   elbow: number;
 }
 
-export type Phase = 'descent' | 'drive' | 'reception' | 'unknown';
+export type Phase = 'descent' | 'drive' | 'reception' | 'press' | 'squat_bottom' | 'front_squat_bottom' | 'back_squat_bottom' | 'front_drive' | 'back_drive' | 'unknown';
 
 export interface AnalysisResult {
   angles: Angles;
