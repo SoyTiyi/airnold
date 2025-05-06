@@ -127,6 +127,8 @@ export default function Navbar() {
 
   // Manejar el clic en Iniciar sesión
   const handleLogin = () => {
+    // Cerrar el menú móvil si está abierto
+    setIsMobileMenuOpen(false);
     setIsLoginLoading(true);
     // La redirección debe ocurrir inmediatamente para evitar problemas
     router.push('/login');
