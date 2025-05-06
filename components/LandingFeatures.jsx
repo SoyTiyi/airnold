@@ -1,6 +1,8 @@
 'use client';
 
 import Image from 'next/image';
+import analyzeMovementImage from '../public/images/analyze_movement.png'
+import movementReportsImage from '../public/images/movement_reports.png'
 
 export default function LandingFeatures() {
   return (
@@ -113,8 +115,11 @@ export default function LandingFeatures() {
             
             {/* Right image */}
             <div className="bg-white p-4 rounded-2xl shadow-xl transform rotate-1">
-              <div className="bg-gray-300 h-80 w-full rounded-xl flex items-center justify-center">
-                <p className="text-gray-600 font-medium">Imagen de demostración</p>
+              <div className="h-80 w-full rounded-xl overflow-hidden">
+                <Image
+                  src={analyzeMovementImage}
+                  alt="Análisis de movimiento"
+                  className="h-full w-full object-cover"/>
               </div>
             </div>
           </div>
@@ -123,8 +128,11 @@ export default function LandingFeatures() {
           <div className="grid md:grid-cols-2 gap-16 items-center mt-20">
             {/* Left image */}
             <div className="bg-white p-4 rounded-2xl shadow-xl transform -rotate-1 order-2 md:order-1">
-              <div className="bg-gray-300 h-80 w-full rounded-xl flex items-center justify-center">
-                <p className="text-gray-600 font-medium">Imagen de demostración</p>
+            <div className="h-80 w-full rounded-xl overflow-hidden">
+                <Image
+                  src={movementReportsImage}
+                  alt="Análisis de movimiento"
+                  className="h-full w-full object-cover"/>
               </div>
             </div>
             
@@ -193,7 +201,7 @@ export default function LandingFeatures() {
                 Crear cuenta gratis
               </a>
               <a 
-                href="mailto:contacto@airnold.com" 
+                href="mailto:santiago.marmartinez@gmail.com" 
                 className="inline-block bg-transparent border-2 border-indigo-600 text-indigo-600 hover:bg-indigo-50 font-bold py-3 px-8 rounded-lg text-center"
               >
                 Contactar

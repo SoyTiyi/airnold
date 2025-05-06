@@ -16,6 +16,8 @@
     "cypress:run": "cypress run"
   },
   "dependencies": {
+    "@dotlottie/react-player": "^1.6.19",
+    "@lottiefiles/dotlottie-react": "^0.13.5",
     "@prisma/client": "^5.10.0",
     "@tensorflow-models/pose-detection": "^2.0.0",
     "@tensorflow/tfjs": "^4.17.0",
@@ -25,6 +27,7 @@
     "jose": "^6.0.10",
     "jsonwebtoken": "^9.0.2",
     "jspdf": "^2.5.1",
+    "lottie-react": "^2.4.1",
     "next": "14.1.0",
     "openai": "^4.96.2",
     "react": "^18",

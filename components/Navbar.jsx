@@ -10,10 +10,14 @@ export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoginLoading, setIsLoginLoading] = useState(false);
+  const [isLogoutLoading, setIsLogoutLoading] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const isHomePage = pathname === '/';
   const isAnalyzePage = pathname === '/analyze';
+  const isLoginPage = pathname === '/login';
+  const isRegisterPage = pathname === '/register';
   
   // Verificar si el usuario está autenticado
   useEffect(() => {
@@ -83,14 +87,49 @@ export default function Navbar() {
   // Manejar el cierre de sesión
   const handleLogout = async () => {
     try {
-      await fetch('/api/auth/logout', {
+      setIsLogoutLoading(true);
+      
+      // Realizar la solicitud de logout
+      const response = await fetch('/api/auth/logout', {
         method: 'POST',
+        headers: {
+          'Cache-Control': 'no-cache',
+        },
+        credentials: 'include'
       });
+      
+      // Independientemente de la respuesta, forzar la redirección
       setIsAuthenticated(false);
-      router.push('/');
+      
+      // Limpiar cualquier dato de autenticación del almacenamiento local
+      localStorage.removeItem('userSession');
+      sessionStorage.removeItem('userSession');
+      
+      // Forzar una redirección directa a la página de login
+      setTimeout(() => {
+        document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        window.location.replace('/login');
+      }, 300);
+      
     } catch (error) {
       console.error('Logout error:', error);
+      setIsLogoutLoading(false);
+      
+      // En caso de error, intentar redirigir de todos modos
+      window.location.href = '/login';
     }
+  };
+
+  // Restablecer el estado de carga del login cuando cambia la ruta
+  useEffect(() => {
+    setIsLoginLoading(false);
+  }, [pathname]);
+
+  // Manejar el clic en Iniciar sesión
+  const handleLogin = () => {
+    setIsLoginLoading(true);
+    // La redirección debe ocurrir inmediatamente para evitar problemas
+    router.push('/login');
   };
 
   // Determinar el estilo del navbar basado en la página actual y el scroll
@@ -153,15 +192,26 @@ export default function Navbar() {
                   </Link>
                   <button
                     onClick={handleLogout}
+                    disabled={isLogoutLoading}
                     className={`${
                       isAnalyzePage 
                         ? 'bg-red-600 text-white hover:bg-red-700' 
                         : isScrolled 
                           ? 'bg-red-600 text-white' 
                           : 'bg-white text-red-600'
-                    } px-4 py-2 rounded-md font-medium hover:bg-opacity-90 transition-colors`}
+                    } px-4 py-2 rounded-md font-medium hover:bg-opacity-90 transition-colors ${isLogoutLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
                   >
-                    Cerrar sesión
+                    {isLogoutLoading ? (
+                      <span className="flex items-center justify-center">
+                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Cerrando...
+                      </span>
+                    ) : (
+                      'Cerrar sesión'
+                    )}
                   </button>
                 </>
               ) : (
@@ -191,14 +241,27 @@ export default function Navbar() {
                   >
                     Contacto
                   </button>
-                  <Link
-                    href="/login"
-                    className={`${
-                      isScrolled ? 'bg-indigo-600 text-white' : 'bg-white text-indigo-600'
-                    } px-4 py-2 rounded-md font-medium hover:bg-opacity-90 transition-colors`}
-                  >
-                    Iniciar sesión
-                  </Link>
+                  {!isLoginPage && (
+                    <button
+                      onClick={handleLogin}
+                      disabled={isLoginLoading}
+                      className={`${
+                        isScrolled ? 'bg-indigo-600 text-white' : 'bg-white text-indigo-600'
+                      } px-4 py-2 rounded-md font-medium hover:bg-opacity-90 transition-colors ${isLoginLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                    >
+                      {isLoginLoading ? (
+                        <span className="flex items-center justify-center">
+                          <svg className="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Cargando...
+                        </span>
+                      ) : (
+                        'Iniciar sesión'
+                      )}
+                    </button>
+                  )}
                 </>
               )}
             </div>
@@ -208,7 +271,9 @@ export default function Navbar() {
           <div className="md:hidden">
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="inline-flex items-center justify-center p-2 rounded-md hover:bg-indigo-700 text-white focus:outline-none"
+              className={`inline-flex items-center justify-center p-2 rounded-md hover:bg-indigo-700 focus:outline-none ${
+                isScrolled ? 'text-indigo-600' : 'text-white'
+              }`}
               aria-expanded="false"
             >
               <span className="sr-only">Open main menu</span>
@@ -263,9 +328,20 @@ export default function Navbar() {
               </Link>
               <button
                 onClick={handleLogout}
+                disabled={isLogoutLoading}
                 className="block w-full text-center px-3 py-2 text-white bg-red-600 hover:bg-red-700 rounded-md"
               >
-                Cerrar sesión
+                {isLogoutLoading ? (
+                  <span className="flex items-center justify-center">
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Cerrando...
+                  </span>
+                ) : (
+                  'Cerrar sesión'
+                )}
               </button>
             </>
           ) : (
@@ -295,12 +371,25 @@ export default function Navbar() {
               >
                 Contacto
               </button>
-              <Link
-                href="/login"
-                className="block w-full text-center px-3 py-2 text-white bg-indigo-600 hover:bg-indigo-700 rounded-md"
-              >
-                Iniciar sesión
-              </Link>
+              {!isLoginPage && (
+                <button
+                  onClick={handleLogin}
+                  disabled={isLoginLoading}
+                  className="block w-full text-center px-3 py-2 text-white bg-indigo-600 hover:bg-indigo-700 rounded-md"
+                >
+                  {isLoginLoading ? (
+                    <span className="flex items-center justify-center">
+                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Cargando...
+                    </span>
+                  ) : (
+                    'Iniciar sesión'
+                  )}
+                </button>
+              )}
             </>
           )}
         </div>
