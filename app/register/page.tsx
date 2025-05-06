@@ -11,12 +11,16 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
+    
     try {
-      const response = await fetch('/api/auth/register', {
+      // Paso 1: Registrar al usuario
+      const registerResponse = await fetch('/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -24,14 +28,32 @@ export default function RegisterPage() {
         body: JSON.stringify({ name, email, password }),
       });
 
-      if (response.ok) {
-        router.push('/login');
+      if (registerResponse.ok) {
+        // Paso 2: Si el registro es exitoso, hacer login automáticamente
+        const loginResponse = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({ email, password }),
+        });
+
+        if (loginResponse.ok) {
+          // Si el login es exitoso, redirigir a la página de análisis
+          router.push('/analyze');
+        } else {
+          // Si falla el login después del registro (raro, pero posible)
+          router.push('/login?registered=true');
+        }
       } else {
-        const data = await response.json();
+        const data = await registerResponse.json();
         setError(data.message || 'Error al registrarse');
+        setIsLoading(false);
       }
     } catch (err) {
       setError('Error al conectar con el servidor');
+      setIsLoading(false);
     }
   };
 
@@ -108,9 +130,12 @@ export default function RegisterPage() {
           <div>
             <button
               type="submit"
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              disabled={isLoading}
+              className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white ${
+                isLoading ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'
+              } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500`}
             >
-              Registrarse
+              {isLoading ? 'Procesando...' : 'Registrarse'}
             </button>
           </div>
         </form>

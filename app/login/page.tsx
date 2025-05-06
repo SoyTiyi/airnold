@@ -25,7 +25,7 @@ export default function LoginPage() {
       });
 
       if (response.ok) {
-        router.push('/');
+        router.push('/analyze');
       } else {
         const data = await response.json();
         setError(data.message || 'Error al iniciar sesión');
