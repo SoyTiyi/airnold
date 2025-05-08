@@ -73,10 +73,7 @@ export default function AnalyzePage() {
   };
 
   const handleVideoReady = (video: HTMLVideoElement, base64Data: string) => {
-    console.log('Video ready called with base64 data');
-    
     if (!video.src) {
-      console.log('No video source provided');
       return;
     }
 
@@ -102,13 +99,11 @@ export default function AnalyzePage() {
   };
 
   const handleRecordingComplete = (data: MovementData[]) => {
-    console.log('Recording complete with frames:', data.length);
     setRecordedData(data);
     setIsRecordingComplete(true);
   };
 
   const handleNewVideo = () => {
-    console.log('Handling new video request');
     if (videoRef.current) {
       videoRef.current.pause();
       videoRef.current.removeAttribute('src');

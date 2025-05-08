@@ -2,8 +2,6 @@ import { MovementData, MovementAnalysis } from '@/types';
 
 export async function analyzeMovement(frames: MovementData[]): Promise<MovementAnalysis> {
   try {
-    console.log(`Enviando petición de análisis con ${frames.length} frames`);
-    
     const response = await fetch('/api/analyze', {
       method: 'POST',
       headers: {
@@ -14,7 +12,6 @@ export async function analyzeMovement(frames: MovementData[]): Promise<MovementA
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`Error en respuesta API: ${response.status} - ${errorText}`);
       throw new Error(`Error del servidor: ${response.status} - ${errorText.substring(0, 100)}`);
     }
 
@@ -22,11 +19,9 @@ export async function analyzeMovement(frames: MovementData[]): Promise<MovementA
     
     // Add validation for the expected data structure
     if (!data || !data.analysis) {
-      console.error('La respuesta de API no contiene datos de análisis:', data);
       throw new Error('La respuesta del servidor no contiene datos de análisis');
     }
     
-    console.log('Respuesta de análisis recibida:', data.analysis);
     return data.analysis;
   } catch (error) {
     console.error('Error en análisis de movimiento:', error);

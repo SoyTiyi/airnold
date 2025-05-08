@@ -32,4 +32,4 @@ export interface MovementAnalysis {
   feedback: string;
   recommendations: string[];
   score: number;
-} 
+}

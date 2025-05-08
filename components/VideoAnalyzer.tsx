@@ -38,19 +38,9 @@ export default function VideoAnalyzer({
 
     const checkVideo = () => {
       if (video.readyState >= 2) {
-        console.log('Video ready state check:', {
-          readyState: video.readyState,
-          width: video.videoWidth,
-          height: video.videoHeight,
-          duration: video.duration,
-          src: video.src
-        });
-        
         if (video.videoWidth > 0 && video.videoHeight > 0) {
           setIsVideoReady(true);
           video.removeEventListener('loadeddata', checkVideo);
-        } else {
-          console.log('Video dimensions not yet available');
         }
       }
     };
@@ -70,11 +60,8 @@ export default function VideoAnalyzer({
 
     async function initializeDetector() {
       try {
-        console.log('Initializing TensorFlow...');
         await tf.ready();
-        console.log('Setting backend...');
         await tf.setBackend('webgl');
-        console.log('Creating detector...');
         
         const detector = await poseDetection.createDetector(
           poseDetection.SupportedModels.MoveNet,
@@ -82,7 +69,6 @@ export default function VideoAnalyzer({
             modelType: poseDetection.movenet.modelType.SINGLEPOSE_THUNDER,
           }
         );
-        console.log('Detector created successfully');
         detectorRef.current = detector;
         isInitializedRef.current = true;
       } catch (error) {
@@ -121,15 +107,6 @@ export default function VideoAnalyzer({
       const rect = video.getBoundingClientRect();
       canvas.width = rect.width;
       canvas.height = rect.height;
-      
-      console.log('Canvas initialized with dimensions:', {
-        width: canvas.width,
-        height: canvas.height,
-        videoWidth: video.videoWidth,
-        videoHeight: video.videoHeight,
-        rectWidth: rect.width,
-        rectHeight: rect.height
-      });
     };
 
     updateCanvasSize();
@@ -158,7 +135,6 @@ export default function VideoAnalyzer({
       if (!isRunning || !videoRef.current) return;
 
       if (videoRef.current.paused || videoRef.current.ended) {
-        console.log('Recording completed');
         setIsRecording(false);
         onRecordingComplete(movementDataRef.current);
         return;
@@ -179,7 +155,6 @@ export default function VideoAnalyzer({
           }
           lastFrameTime = timestamp;
         } catch (error) {
-          console.error('Error in frame capture:', error);
           return;
         }
       }
@@ -257,7 +232,6 @@ export default function VideoAnalyzer({
         phase
       };
     } catch (error) {
-      console.error('Error capturing frame:', error);
       return null;
     }
   }

@@ -308,8 +308,6 @@ function parseAIResponse(response: string | null): MovementAnalysis {
     score: 0
   };
   
-  console.log("Raw response from OpenAI:", response);
-  
   if (!response) return defaultResult;
 
   try {
@@ -450,11 +448,8 @@ function parseAIResponse(response: string | null): MovementAnalysis {
       score = Math.min(100, Math.max(0, parseInt(scoreMatch[1], 10)));
     }
 
-    console.log("Parsed result:", { movement, feedback: feedback.substring(0, 50) + "...", recommendations, score });
     return { movement, feedback, recommendations, score };
   } catch (error) {
-    console.error('Error parsing AI response:', error);
-    
     // If there was an error parsing, let's try a very basic parsing as fallback
     try {
       // Extract any movement name
@@ -473,7 +468,6 @@ function parseAIResponse(response: string | null): MovementAnalysis {
         score
       };
     } catch (e) {
-      console.error('Fallback parsing also failed:', e);
       return defaultResult;
     }
   }

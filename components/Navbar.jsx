@@ -35,15 +35,12 @@ export default function Navbar() {
         
         if (response.ok) {
           const data = await response.json();
-          console.log('Auth status:', data.authenticated);
           setIsAuthenticated(data.authenticated);
         } else {
           // Si hay error en la respuesta, asumimos que no está autenticado
-          console.error('Error response from auth check');
           setIsAuthenticated(false);
         }
       } catch (error) {
-        console.error('Error checking authentication:', error);
         setIsAuthenticated(false);
       } finally {
         setIsLoading(false);
@@ -112,7 +109,6 @@ export default function Navbar() {
       }, 300);
       
     } catch (error) {
-      console.error('Logout error:', error);
       setIsLogoutLoading(false);
       
       // En caso de error, intentar redirigir de todos modos

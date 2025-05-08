@@ -35,10 +35,7 @@ export default function MovementFeedback({ analysisFrames }: MovementFeedbackPro
       setLoading(true);
       setError(null);
       
-      console.log(`Enviando ${analysisFrames.length} frames para análisis...`);
       const result = await analyzeMovement(analysisFrames);
-      
-      console.log('Resultado del análisis:', result);
       
       if (!result) {
         setError('No se recibió respuesta del servicio de análisis');
