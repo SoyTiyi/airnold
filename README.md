@@ -71,7 +71,14 @@ AIrnold is a sophisticated web application that uses artificial intelligence to 
 2. **Environment Setup**
    Create a `.env` file in the root directory with:
    ```env
+   # OpenAI API Key for training plan generation
    OPENAI_API_KEY=your_openai_api_key
+
+   # PostgreSQL Database URL
+   DATABASE_URL="postgresql://user:password@localhost:5432/airnold"
+
+   # JWT Secret for authentication
+   JWT_SECRET=your_jwt_secret_key
    ```
 
 3. **Installation**
