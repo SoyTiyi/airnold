@@ -1,108 +1,148 @@
-# AIrnold - CrossFit Technique Analysis Platform
+# AIrnold - AI-Powered Exercise Form Analysis
 
-AIrnold is a web application that uses computer vision and AI to analyze weightlifting technique in real-time. It provides immediate feedback on form and generates detailed reports with recommendations for improvement.
+AIrnold is a sophisticated web application that uses artificial intelligence to analyze exercise form and technique, providing real-time feedback and personalized training recommendations.
 
 ## Features
 
-- Real-time pose detection using TensorFlow.js MoveNet
-- Phase detection for weightlifting movements
-- Angle analysis for key joints
-- AI-powered recommendations using OpenAI
-- PDF report generation
-- Video upload and analysis
-- Interactive timeline visualization
+### 1. Real-Time Movement Analysis
+- Upload videos (up to 30 seconds) of exercise movements
+- Real-time pose detection and keypoint analysis
+- Visual feedback with skeleton overlay on the video
+- Frame-by-frame movement tracking
 
-## Tech Stack
+### 2. Comprehensive Technique Analysis
+- Movement identification and classification
+- Detailed feedback on form and technique
+- Joint angle measurements and tracking
+- Phase detection during exercise execution
+- Overall movement score with visual indicators
 
-- Next.js 13+ (React 18+)
-- TensorFlow.js
-- MoveNet Lightning
-- OpenAI API
-- Prisma + PostgreSQL
-- TailwindCSS
-- jsPDF
+### 3. Smart Feedback System
+- Instant feedback on form corrections
+- Detailed recommendations for improvement
+- Movement-specific tips and guidelines
+- Performance scoring (0-100%)
+- Color-coded feedback indicators
+
+### 4. AI-Powered Training Plans
+- Personalized training plan generation based on analysis
+- Exercise recommendations tailored to improvement areas
+- Detailed workout structures including:
+  - Sets and repetitions
+  - Exercise-specific instructions
+  - Form tips and execution notes
+  - Progressive improvement strategies
+
+### 5. User Experience
+- Intuitive video upload interface
+- Real-time analysis visualization
+- Responsive design for all devices
+- Clean and modern UI
+- Easy-to-understand feedback presentation
+
+## Technical Stack
+
+- **Frontend:**
+  - Next.js (React)
+  - TypeScript
+  - Tailwind CSS for styling
+  - Real-time pose detection visualization
+
+- **Backend:**
+  - Next.js API routes
+  - OpenAI GPT-4 for training plan generation
+  - TensorFlow.js for pose detection
+  - Movement analysis algorithms
+
+- **AI/ML Components:**
+  - TensorFlow.js MoveNet for pose estimation
+  - Custom movement analysis algorithms
+  - GPT-4 for training plan generation
+  - Real-time keypoint detection and tracking
 
 ## Getting Started
 
-### Prerequisites
+1. **Prerequisites**
+   ```bash
+   Node.js (v18 or higher)
+   npm or yarn
+   ```
 
-- Node.js 18+
-- PostgreSQL
-- OpenAI API key
+2. **Environment Setup**
+   Create a `.env` file in the root directory with:
+   ```env
+   OPENAI_API_KEY=your_openai_api_key
+   ```
 
-### Installation
+3. **Installation**
+   ```bash
+   # Clone the repository
+   git clone https://github.com/yourusername/airnold.git
 
-1. Clone the repository:
-```bash
-git clone https://github.com/yourusername/airnold.git
-cd airnold
-```
+   # Install dependencies
+   cd airnold
+   npm install
+   # or
+   yarn install
+   ```
 
-2. Install dependencies:
-```bash
-npm install
-```
+4. **Running the Application**
+   ```bash
+   # Development mode
+   npm run dev
+   # or
+   yarn dev
 
-3. Create a `.env.local` file in the root directory with the following variables:
-```env
-DATABASE_URL="postgresql://user:password@localhost:5432/airnold"
-OPENAI_API_KEY="your-openai-api-key"
-```
+   # Production build
+   npm run build
+   npm start
+   # or
+   yarn build
+   yarn start
+   ```
 
-4. Initialize the database:
-```bash
-npx prisma migrate dev
-```
+## Usage Guide
 
-5. Start the development server:
-```bash
-npm run dev
-```
+1. **Video Upload**
+   - Click "Upload Video" or drag and drop your exercise video
+   - Videos should be clear and show the full body
+   - Maximum duration: 30 seconds
 
-The application will be available at `http://localhost:3000`.
+2. **Movement Analysis**
+   - After upload, the analysis starts automatically
+   - Watch the real-time skeleton overlay
+   - Wait for the analysis to complete
 
-## Usage
+3. **Review Feedback**
+   - Check the detected movement type
+   - Review the detailed feedback section
+   - Note the overall performance score
+   - Read through specific recommendations
 
-1. Upload a video (max 30 seconds) of your weightlifting movement
-2. Click "Start Analysis" to begin real-time pose detection
-3. View the analysis results and recommendations
-4. Download a PDF report with detailed analysis
-
-## Development
-
-### Project Structure
-
-```
-ai-lift-analyzer/
-├── app/                    # Next.js app directory
-│   ├── api/               # API routes
-│   └── page.jsx           # Main page
-├── components/            # React components
-├── prisma/               # Database schema
-├── public/               # Static assets
-├── styles/               # Global styles
-└── utils/                # Utility functions
-```
-
-### Available Scripts
-
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm start` - Start production server
-- `npm run lint` - Run ESLint
-- `npm run prisma:generate` - Generate Prisma client
-- `npm run prisma:migrate` - Run database migrations
-- `npm test` - Run tests
-- `npm run cypress:open` - Open Cypress test runner
+4. **Generate Training Plan**
+   - Click "Generate Training Plan" after analysis
+   - Review the personalized workout plan
+   - Check exercise details, sets, and reps
+   - Follow the provided form tips
 
 ## Contributing
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+We welcome contributions! Please read our contributing guidelines before submitting pull requests.
 
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgments
+
+- TensorFlow.js team for the MoveNet model
+- OpenAI for GPT-4 API
+- All contributors and testers
+
+## Support
+
+For support, please open an issue in the GitHub repository or contact the maintenance team.
+
+---
+
+Built with ❤️ by the AIrnold Team
