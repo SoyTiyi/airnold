@@ -6,10 +6,24 @@ interface MovementFeedbackProps {
   analysisFrames: MovementData[];
 }
 
+interface TrainingResponse {
+  title: string;
+  description: string;
+  exercises: {
+    name: string;
+    sets: number;
+    reps: string;
+    notes?: string;
+  }[];
+}
+
 export default function MovementFeedback({ analysisFrames }: MovementFeedbackProps) {
   const [analysis, setAnalysis] = useState<MovementAnalysis | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showTrainingModal, setShowTrainingModal] = useState(false);
+  const [trainingPlan, setTrainingPlan] = useState<TrainingResponse | null>(null);
+  const [loadingTraining, setLoadingTraining] = useState(false);
 
   const handleAnalyze = async () => {
     if (analysisFrames.length === 0) {
@@ -26,13 +40,11 @@ export default function MovementFeedback({ analysisFrames }: MovementFeedbackPro
       
       console.log('Resultado del análisis:', result);
       
-      // Verify the response has the expected data
       if (!result) {
         setError('No se recibió respuesta del servicio de análisis');
         return;
       }
       
-      // Check if we have an actual movement identified
       if (result.movement === "Movimiento no identificado" && result.feedback === "No se pudo analizar el movimiento") {
         setError('El análisis no pudo identificar el movimiento. Por favor, intenta con otro vídeo o movimiento más claro.');
         return;
@@ -44,6 +56,39 @@ export default function MovementFeedback({ analysisFrames }: MovementFeedbackPro
       setError('Error al analizar el movimiento. Por favor, intenta de nuevo.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGenerateTraining = async () => {
+    if (!analysis) return;
+
+    try {
+      setLoadingTraining(true);
+      setError(null);
+
+      const response = await fetch('/api/training', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          movement: analysis.movement,
+          feedback: analysis.feedback,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al generar el entrenamiento');
+      }
+
+      const trainingData = await response.json();
+      setTrainingPlan(trainingData);
+      setShowTrainingModal(true);
+    } catch (err) {
+      console.error('Error generando entrenamiento:', err);
+      setError('Error al generar el entrenamiento. Por favor, intenta de nuevo.');
+    } finally {
+      setLoadingTraining(false);
     }
   };
 
@@ -160,6 +205,34 @@ export default function MovementFeedback({ analysisFrames }: MovementFeedbackPro
             <div className="space-y-1">
               {formatFeedback(analysis.feedback)}
             </div>
+            <div className="mt-6">
+              <button
+                onClick={handleGenerateTraining}
+                disabled={loadingTraining}
+                className={`w-full md:w-auto px-6 py-3 rounded-lg font-medium ${
+                  loadingTraining
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:shadow-lg transition-all transform hover:-translate-y-0.5'
+                }`}
+              >
+                {loadingTraining ? (
+                  <span className="flex items-center justify-center">
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Generando entrenamiento...
+                  </span>
+                ) : (
+                  <span className="flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    Generar Plan de Entrenamiento
+                  </span>
+                )}
+              </button>
+            </div>
           </div>
 
           {analysis.recommendations && analysis.recommendations.length > 0 ? (
@@ -209,6 +282,50 @@ export default function MovementFeedback({ analysisFrames }: MovementFeedbackPro
           <p className="text-gray-600 mb-4">
             Haz clic en el botón "Analizar Movimiento" para obtener un análisis detallado de tu técnica.
           </p>
+        </div>
+      )}
+
+      {/* Modal de Plan de Entrenamiento */}
+      {showTrainingModal && trainingPlan && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-start mb-4">
+                <h2 className="text-2xl font-bold text-indigo-800">{trainingPlan.title}</h2>
+                <button
+                  onClick={() => setShowTrainingModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              <p className="text-gray-600 mb-6">{trainingPlan.description}</p>
+              
+              <div className="space-y-4">
+                {trainingPlan.exercises.map((exercise, index) => (
+                  <div key={index} className="bg-gray-50 p-4 rounded-lg">
+                    <h3 className="font-semibold text-lg text-gray-800 mb-2">{exercise.name}</h3>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="text-gray-600">Series:</span>
+                        <span className="ml-2 font-medium">{exercise.sets}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-600">Repeticiones:</span>
+                        <span className="ml-2 font-medium">{exercise.reps}</span>
+                      </div>
+                    </div>
+                    {exercise.notes && (
+                      <p className="mt-2 text-sm text-gray-600">{exercise.notes}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
