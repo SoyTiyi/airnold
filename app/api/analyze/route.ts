@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { MovementData, MovementAnalysis } from '@/types';
+import liftAnalysisPrompt from '../../../prompts/liftAnalysisPrompt'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
@@ -25,89 +26,7 @@ export async function POST(request: NextRequest) {
       messages: [
         {
           role: "system",
-          content: `Eres un entrenador CrossFitista de élite especializado en técnica con barra. Vas a analizar un video que contiene varias repeticiones (por ejemplo, 3 Clean and Jerks seguidos). Tu objetivo es identificar y analizar CADA repetición individualmente, y luego dar un feedback general. 
-
-INSTRUCCIÓN CRUCIAL: Si observas CUALQUIERA de estos patrones, debes clasificar el movimiento como CLEAN AND JERK (no como squat):
-1. Si en CUALQUIER momento la barra pasa de una posición baja a estar sobre los hombros (front rack)
-2. Si los codos rotan de una posición baja a una posición alta (>90°) durante el movimiento
-3. Si la barra termina por encima de la cabeza en CUALQUIER momento
-4. Si hay una secuencia que muestra: tirón → recepción con codos altos → overhead
-
-El Clean and Jerk se caracteriza por:
-- Ángulos de codo que cambian drásticamente a lo largo del movimiento
-- La barra pasa por múltiples posiciones verticales
-- Presencia de una fase de recepción seguida de un press overhead
-- Los hombros rotan de una posición baja a una posición alta
-
-Incluso si solo ves PARCIALMENTE estas características, debes favorecer la clasificación Clean and Jerk sobre Back Squat.
-
-I. INSTRUCCIONES GENERALES:
-1. PRIMERO identifica cuántas repeticiones hay en total en la secuencia de video.
-2. Para CADA repetición, debes realizar:
-   A. Identificación clara del tipo de movimiento:
-      - Clean and Jerk: Identificable por las fases de tirón+recepción en rack frontal+jerk (extensión de brazos overhead)
-      - Clean: Tirón + recepción en rack frontal (sin jerk)
-      - Squat: Front o Back según posición de codos y hombros (SOLO clasificar como squat si es claramente visible y NO hay indicio de Clean and Jerk)
-      - Otros movimientos (Snatch, Thruster, etc.)
-   
-   B. ESPECÍFICAMENTE para Clean and Jerk busca:
-      - Fase 1 - Pull/Tirón: Extensión desde la posición inicial
-      - Fase 2 - Recepción en Rack Frontal: Codos altos (>90°) y barra descansando en deltoides
-      - Fase 3 - Dip & Drive: Pequeña flexión de rodillas seguida de empuje explosivo
-      - Fase 4 - Jerk: Recepción con brazos extendidos overhead (hombros ~180°, codos extendidos)
-
-   C. Ángulos clave a analizar en CADA repetición:
-      - Rodilla en posición inicial: ~120-130°
-      - Rodilla en recepción: ~90° (squat profundo)
-      - Cadera en extensión completa: >160° durante pull
-      - Codos en rack frontal: >90° (posición de front rack adecuada)
-      - Hombros y codos en fase final: ~180° en overhead lockout
-
-3. Distinguir entre movimientos similares:
-   - Clean and Jerk vs Back Squat:
-     * Clean and Jerk tiene una fase donde la barra está en front rack Y cambios en ángulos de codos
-     * Back Squat mantiene ángulos de codo constantes y barra en la espalda
-   
-   - Clean and Jerk vs Front Squat:
-     * Ambos tienen una posición similar de rack frontal
-     * En Clean and Jerk hay CAMBIO en la posición de los brazos durante el movimiento
-     * En Front Squat NO hay cambio en la posición de los brazos
-
-   - Clean and Jerk vs Thruster:
-     * Ambos terminan con la barra overhead
-     * Clean and Jerk tiene una clara separación entre la recepción y el jerk
-     * Thruster es un movimiento más fluido sin pausa entre squat y press
-
-II. FORMATO DE RESPUESTA (EXACTO - SIGUE ESTE FORMATO AL PIE DE LA LETRA):
-1. Identificación de Repeticiones:
-   Repetición 1: [Nombre del Movimiento]
-   Repetición 2: [Nombre del Movimiento]
-   Repetición 3: [Nombre del Movimiento]
-   (Identifica todas las repeticiones existentes)
-   
-2. Feedback General:
-   [Fluidez y timing]: El levantador presenta fluidez y buen timing en cada repetición. [Análisis detallado]
-   
-   [Estabilidad de la barra]: [Análisis detallado]
-   
-   [Profundidad adecuada]: [Análisis detallado]
-   
-   [Coordinación]: [Análisis detallado]
-
-3. Recomendaciones:
-   1. [Primera recomendación detallada]
-   2. [Segunda recomendación detallada]
-   3. [Tercera recomendación detallada]
-
-4. Puntuación (0-100):
-   85
-
-Observaciones importantes:
-- NO uses guiones (-) al inicio de los párrafos en el Feedback General
-- Usa encabezados entre corchetes [Título] seguidos de: para cada aspecto del feedback
-- Asegúrate de que la puntuación sea un número entre 0 y 100, no escribas "puntos" o "%" después
-- Presenta cada sección del feedback en párrafos separados, no en una lista con guiones
-- Asegúrate de numerar las recomendaciones correctamente`
+          content: liftAnalysisPrompt
         },
         {
           role: "user",
@@ -131,173 +50,113 @@ Observaciones importantes:
 }
 
 function generateAnalysisPrompt(frames: MovementData[]): string {
-  // Use selected key frames to limit token usage
+  // Elegimos sólo los keyframes relevantes para el único levantamiento
   const keyFrames = selectKeyFrames(frames);
 
-  return `Analiza esta secuencia de movimiento basándote en los puntos clave proporcionados.
+  // Tomamos el primer (y único) gesto de interés
+  const mv = keyFrames[0];
 
-CRÍTICO - PRIORIDAD DE ANÁLISIS:
-Tu objetivo principal es identificar si el movimiento es un Clean and Jerk. ANTES de decidir si es un Back Squat, revisa cuidadosamente los siguientes indicadores de Clean and Jerk:
+  return `Analiza este vídeo que contiene **UN ÚNICO levantamiento olímpico**. 
+Tu tarea es determinar si se trata de un **Snatch** o un **Clean and Jerk**, 
+analizar las fases y ángulos clave, y entregar feedback y recomendaciones
+en el siguiente formato exacto (no generes nada fuera de este esquema):
 
-1. CAMBIOS en ángulos de codo (si cambian de <90° a >90° durante la secuencia)
-2. CAMBIOS en la posición vertical de la barra (si sube de la cadera a los hombros o sobre la cabeza)
-3. CUALQUIER frame que muestre la barra sobre los hombros (front rack) o en posición elevada
-4. Presencia de fases distintas que indican Clean and Jerk (tirón → recepción → jerk)
-
-IMPORTANTE - Calidad del Análisis:
-Los frames proporcionados son capturas tomadas a 60 FPS (frames por segundo). Debido a limitaciones de tokens, solo te mostramos una muestra de estos frames. Analiza cuidadosamente la progresión entre frames - puede haber saltos entre etapas del movimiento.
-
-IMPORTANTE - Identificación del Movimiento:
-Analiza la secuencia completa de movimientos y busca estas secuencias específicas:
-
-1. Para Clean and Jerk busca esta progresión (que puede estar distribuida en diferentes frames):
-   - Posición inicial: Barra baja, codos extendidos, hombros bajos
-   - Transición: Cambios en ángulos de rodilla/cadera (tirón)
-   - Front rack en CUALQUIER momento: Codos >90° con barra apoyada en hombros/deltoides
-   - Cualquier indicio de fase overhead: Brazos extendidos sobre cabeza o en posición elevada
-   
-   NOTA: El movimiento puede ser parcial o incompleto. Si ves CUALQUIER indicación de clean o jerk, clasifícalo como Clean and Jerk.
-
-2. Diferencias CLAVE Clean and Jerk vs Back Squat:
-   - Clean and Jerk: Los ángulos de codo VARÍAN durante la secuencia (aumentan significativamente)
-   - Back Squat: Los ángulos de codo se MANTIENEN CONSTANTES en <90° durante todo el movimiento
-   - Clean and Jerk: La barra cambia de altura vertical significativamente
-   - Back Squat: La barra mantiene altura similar en relación a los hombros
-
-3. Identifica múltiples repeticiones buscando:
-   - Retorno a una posición similar a la inicial
-   - Ciclos completos donde la barra sube y luego baja o retorna a posición inicial
-   - Cada ciclo completo es una repetición independiente
-
-Datos del Movimiento:
-${keyFrames.map((frame, i) => `
-Frame ${i + 1} - Tiempo: ${frame.timestamp.toFixed(3)}s
-- Fase: ${frame.phase}
-- Ángulos Articulares:
-  * Rodilla: ${frame.angles.knee}° (>140° extendido, ~90° squat profundo)
-  * Cadera: ${frame.angles.hip}° (>160° extendido, <90° squat profundo)
-  * Hombro: ${frame.angles.shoulder}° (0° abajo, 90° frontal, 180° arriba)
-  * Codo: ${frame.angles.elbow}° (180° extendido, ~90° rack position)
-
-Análisis Detallado:
-* Posición de Barra: ${
-    frame.angles.elbow > 90 && frame.angles.shoulder < 140 
-      ? 'FRONT RACK (posible Clean)' 
-      : frame.angles.elbow < 90 && frame.angles.shoulder > 120 
-        ? 'Back Rack (posible Back Squat)' 
-        : frame.angles.shoulder > 160 && frame.angles.elbow > 140
-          ? 'OVERHEAD (fase de Jerk)'
-          : frame.angles.knee > 140 && frame.angles.hip > 140
-            ? 'Fase de Tirón/Pull (posible inicio de Clean)'
-            : 'Posición Transitoria'
-  }
-
-* Indicadores de Clean and Jerk:
-  - Fase de Pull/Tirón: ${frame.angles.knee > 120 && frame.angles.hip > 120 ? 'PRESENTE' : 'No detectada'}
-  - Front Rack: ${frame.angles.elbow > 90 && frame.angles.shoulder < 140 ? 'PRESENTE' : 'No detectada'}
-  - Posición Overhead: ${frame.angles.shoulder > 160 && frame.angles.elbow > 140 ? 'PRESENTE' : 'No detectada'}
-  - Posible Clean and Jerk: ${
-      (frame.angles.elbow > 90 && frame.angles.shoulder < 140) || 
-      (frame.angles.shoulder > 160 && frame.angles.elbow > 140) ? 
-      'ALTA PROBABILIDAD' : 'Indeterminado'
-    }
-`).join('\n')}
-
-ANÁLISIS DE CAMBIOS CRÍTICOS (esto es clave para diferenciar Clean and Jerk de Back Squat):
-
-Variación de ángulos en la secuencia:
-* Cambio máximo en codos: ${calculateAngularChange(keyFrames, 'elbow')}° ${calculateAngularChange(keyFrames, 'elbow') > 30 ? '(INDICA CLEAN AND JERK)' : ''}
-* Cambio máximo en hombros: ${calculateAngularChange(keyFrames, 'shoulder')}° ${calculateAngularChange(keyFrames, 'shoulder') > 50 ? '(INDICA CLEAN AND JERK)' : ''}
-* Front rack detectado: ${detectFrontRack(keyFrames) ? 'SÍ (INDICA CLEAN AND JERK)' : 'No'}
-* Overhead detectado: ${detectOverhead(keyFrames) ? 'SÍ (INDICA CLEAN AND JERK)' : 'No'}
-
-CONCLUSIÓN AUTOMÁTICA: ${
-  (calculateAngularChange(keyFrames, 'elbow') > 30 || 
-   calculateAngularChange(keyFrames, 'shoulder') > 50 ||
-   detectFrontRack(keyFrames) ||
-   detectOverhead(keyFrames)) ? 
-  'Las métricas sugieren CLEAN AND JERK como clasificación más probable' : 
-  'Indeterminado - revisar criterios adicionales'
-}
-
-FORMATO REQUERIDO DE RESPUESTA (SIGUE ESTE FORMATO EXACTAMENTE):
-
-1. Identificación de Repeticiones
-[IMPORTANTE] Clasificación precisa de cada repetición:
-Repetición 1: [Movimiento identificado]
-Repetición 2: [Movimiento identificado] (si existe)
-Repetición 3: [Movimiento identificado] (si existe)
-(incluye todas las repeticiones que identifiques)
+1. Identificación del Movimiento
+[Movimiento]: Snatch o Clean and Jerk
 
 2. Feedback General
-[Fluidez y timing]: Descripción detallada de la fluidez y timing en párrafo completo, sin guiones.
+[Mecánica del movimiento]: …
 
-[Estabilidad de la barra]: Descripción detallada de la estabilidad en párrafo completo.
+[Trayectoria y control]: …
 
-[Profundidad de cada squat]: Análisis específico de la profundidad alcanzada.
+[Posiciones clave]: …
 
-[Coordinación pierna-brazo]: Evaluación de la coordinación entre extremidades.
+[Estabilidad y balance]: …
 
 3. Recomendaciones
-1. Primera recomendación específica en formato de oración completa.
-2. Segunda recomendación detallada.
-3. Tercera recomendación con aspectos concretos a mejorar.
+1. …
+2. …
+3. …
 
-4. Puntuación numérica
-[VALOR NUMÉRICO ENTRE 0-100, SIN SÍMBOLOS] (ejemplo: 85)`;
+4. Puntuación
+[NÚMERO entre 0–100]
+
+---
+
+## DATOS DEL MOVIMIENTO ÚNICO:
+Frame clave – Tiempo: ${mv.timestamp.toFixed(3)}s  
+- Fase detectada: ${mv.phase}  
+- Ángulos articulares:  
+  * Rodilla: ${mv.angles.knee}°  
+  * Cadera: ${mv.angles.hip}°  
+  * Hombro: ${mv.angles.shoulder}°  
+  * Codo: ${mv.angles.elbow}°  
+
+- Posición de la barra: ${
+    mv.angles.elbow > 90 && mv.angles.shoulder >= 70 && mv.angles.shoulder <= 140
+      ? 'Front rack (confirma Clean and Jerk)'
+      : mv.angles.shoulder > 160 && mv.angles.elbow > 160
+        ? 'Overhead lockout'
+        : mv.angles.knee > 140 && mv.angles.hip > 140
+          ? 'Pull con codos extendidos (posible Snatch)'
+          : 'Posición intermedia'
+  }  
+
+- Indicadores clave:  
+  • Overhead final: ${mv.angles.shoulder > 160 && mv.angles.elbow > 160 ? 'Sí' : 'No'}  
+  • Rack frontal: ${mv.angles.elbow > 90 && mv.angles.shoulder >= 70 && mv.angles.shoulder <= 140 ? 'Sí' : 'No'}  
+  • Extensión de codos en pull: ${mv.angles.elbow > 160 ? 'Completa' : 'Flexionada'}  
+
+---
+
+**IMPORTANTE**:  
+- Este prompt asume un solo levantamiento—ignora cualquier otra repetición.  
+- Mantén las secciones y el formato exacto descrito arriba.  
+- No añadas ni quites apartados, ni modifiques los títulos entre corchetes.`;
 }
 
 function selectKeyFrames(frames: MovementData[]): MovementData[] {
-  // If we have a small number of frames, use all of them
-  if (frames.length <= 20) {
-    return frames;
+  const N = frames.length;
+  if (N <= 10) return frames;  // muy pocos frames: devolvemos todo
+
+  // 1) ALWAYS include first & last
+  const keySet = new Set<MovementData>([frames[0], frames[N-1]]);
+
+  // 2) Find deepest squat (min hip angle)
+  const minHip = frames.reduce((best, f) =>
+    f.angles.hip < best.angles.hip ? f : best
+  , frames[0]);
+  keySet.add(minHip);
+
+  // 3) Find maximum extension (max hip angle)
+  const maxHip = frames.reduce((best, f) =>
+    f.angles.hip > best.angles.hip ? f : best
+  , frames[0]);
+  keySet.add(maxHip);
+
+  // 4) Detect front rack entry (first frame where elbow>90° & shoulder≈90°)
+  const rack = frames.find(f =>
+    f.angles.elbow > 90 &&
+    f.angles.shoulder > 70 && f.angles.shoulder < 110
+  );
+  if (rack) keySet.add(rack);
+
+  // 5) Detect overhead lockout (first frame where shoulder>160° & elbow>160°)
+  const lockout = frames.find(f =>
+    f.angles.shoulder > 160 && f.angles.elbow > 160
+  );
+  if (lockout) keySet.add(lockout);
+
+  // 6) (Opcional) Añadir un par de frames equidistantes para contexto
+  const extras = 2;
+  for (let i = 1; i <= extras; i++) {
+    const idx = Math.floor((N - 1) * (i / (extras + 1)));
+    keySet.add(frames[idx]);
   }
   
-  // For larger sequences, take more representative samples to better capture multiple repetitions
-  // This helps identify transition points between repetitions
-  
-  // Estimate how many repetitions we might have (assuming 60 frames for a typical movement)
-  // This is a rough heuristic to ensure we pick enough frames to identify multiple repetitions
-  const estimatedReps = Math.max(1, Math.ceil(frames.length / 60));
-  const samplesPerRep = Math.min(10, Math.floor(20 / estimatedReps));
-  
-  const keyFrames: MovementData[] = [];
-  
-  // Always include first and last frame
-  keyFrames.push(frames[0]);
-  
-  // Add evenly distributed frames to capture the full sequence
-  // This helps identify transitions between repetitions
-  for (let i = 1; i < frames.length - 1; i += Math.max(1, Math.floor(frames.length / 20))) {
-    keyFrames.push(frames[i]);
-  }
-  
-  // Add the last frame
-  if (frames.length > 1) {
-    keyFrames.push(frames[frames.length - 1]);
-  }
-  
-  // Ensure we have at most 25 frames to avoid token limits
-  if (keyFrames.length > 25) {
-    // If we have too many frames, sample them evenly
-    const step = Math.ceil(keyFrames.length / 25);
-    const sampledFrames: MovementData[] = [];
-    
-    // Always include first frame
-    sampledFrames.push(keyFrames[0]);
-    
-    // Sample the middle frames
-    for (let i = step; i < keyFrames.length - 1; i += step) {
-      sampledFrames.push(keyFrames[i]);
-    }
-    
-    // Always include last frame
-    sampledFrames.push(keyFrames[keyFrames.length - 1]);
-    
-    return sampledFrames;
-  }
-  
-  return keyFrames;
+  // Convertimos a array y ordenamos por timestamp
+  return Array.from(keySet)
+    .sort((a, b) => a.timestamp - b.timestamp);
 }
 
 function parseAIResponse(response: string | null): MovementAnalysis {
