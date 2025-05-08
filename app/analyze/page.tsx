@@ -194,7 +194,7 @@ export default function AnalyzePage() {
               
               {!isUploading && videoElement && videoData && (
                 <div className="p-6">
-                  <div className="relative w-full mb-6">
+                  <div className="relative w-full md:w-2/3 lg:w-1/2 xl:w-2/5 mx-auto mb-6">
                     <video
                       ref={videoRef}
                       src={videoData}

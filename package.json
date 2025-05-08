@@ -24,6 +24,7 @@
     "@types/bcryptjs": "^2.4.6",
     "@types/jsonwebtoken": "^9.0.9",
     "bcryptjs": "^3.0.2",
+    "i": "^0.3.7",
     "jose": "^6.0.10",
     "jsonwebtoken": "^9.0.2",
     "jspdf": "^2.5.1",
